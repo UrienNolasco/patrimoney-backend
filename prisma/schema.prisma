@@ -1,0 +1,296 @@
+// schema.prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ==========================================
+// 1. ENUMERATIONS
+// ==========================================
+
+enum TxType {
+  BUY   // Compra
+  SELL  // Venda
+}
+
+enum AssetClass {
+  ACAO        // Ações brasileiras (PETR4, VALE3, etc.)
+  FII         // Fundos de Investimento Imobiliário
+  BDR         // Brazilian Depositary Receipts
+  RENDA_FIXA  // CDB, LCI, LCA, Tesouro Direto, Debêntures
+  FUNDO       // Fundos de Investimento
+  ETF         // Exchange Traded Funds brasileiros
+  CRIPTO      // Criptomoedas
+  COMMODITY   // Commodities (ouro, café, etc.)
+  OPCAO       // Opções
+  FUTURO      // Contratos futuros
+  OUTROS      // Outros tipos de ativos
+}
+
+// ==========================================
+// 2. MAIN MODELS
+// ==========================================
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  wallet    Wallet?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Wallet {
+  id              String           @id @default(uuid())
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String           @unique
+  name            String           @default("Carteira Principal")
+  description     String?
+  currency        String           @default("BRL")
+  isActive        Boolean          @default(true)
+  portfolioItems  PortfolioItem[]
+  transactions    Transaction[]
+  snapshots       Snapshot[]
+  dividends       Dividend[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@map("wallets")
+  Goal Goal[]
+  Category Category[]
+  AuditLog AuditLog[]
+}
+
+model Stock {
+  symbol         String           @id // PETR4, VALE3, etc.
+  name           String           // Petrobras PN, Vale ON, etc.
+  currency       String           @default("BRL")
+  exchange       String?          // B3, etc.
+  assetClass     AssetClass       @default(ACAO)
+
+  // Informações adicionais
+  cnpj           String?          // CNPJ da empresa (para ações)
+  isin           String?          // Código ISIN
+  sector         String?          // Setor econômico
+  segment        String?          // Segmento de listagem (Novo Mercado, etc.)
+  isActive       Boolean          @default(true)
+  logoUrl        String?          // URL do logo
+  website        String?          // Site da empresa
+  description    String?          // Descrição do ativo
+
+  // Relacionamentos
+  portfolioItems PortfolioItem[]
+  transactions   Transaction[]
+  quoteCaches    QuoteCache[]
+  snapshotItems  SnapshotItem[]
+  dividends      Dividend[]
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([assetClass])
+  @@index([sector])
+  @@index([isActive])
+  @@map("stocks")
+  CategoryStock CategoryStock[]
+}
+
+model PortfolioItem {
+  id             String     @id @default(uuid())
+  wallet         Wallet     @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  walletId       String
+  stock          Stock      @relation(fields: [stockSymbol], references: [symbol])
+  stockSymbol    String
+  quantity       Decimal    @default(0) @db.Decimal(15,4)
+  avgCost        Decimal    @default(0) @db.Decimal(15,4)
+  totalCost      Decimal?   @db.Decimal(15,2) // quantity * avgCost (calculado)
+  lastUpdatedAt  DateTime   @updatedAt
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@unique([walletId, stockSymbol])
+  @@index([walletId])
+  @@index([stockSymbol])
+  @@map("portfolio_items")
+}
+
+model Transaction {
+  id            String     @id @default(uuid())
+  wallet        Wallet     @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  walletId      String
+  stock         Stock      @relation(fields: [stockSymbol], references: [symbol])
+  stockSymbol   String
+  type          TxType
+  quantity      Decimal    @db.Decimal(15,4)
+  price         Decimal    @db.Decimal(15,4)
+  total         Decimal    @db.Decimal(15,2) // quantity * price
+  fees          Decimal?   @default(0) @db.Decimal(10,2) // Taxas (corretagem, etc.)
+
+  // Informações adicionais
+  notes         String?    // Observações da operação
+  brokerage     String?    // Corretora utilizada
+  operationId   String?    // ID da operação na corretora
+
+  executedAt    DateTime   @default(now())
+  createdAt     DateTime   @default(now())
+
+  @@index([walletId, executedAt(sort: Desc)])
+  @@index([stockSymbol, executedAt])
+  @@index([type, executedAt])
+  @@index([brokerage])
+  @@map("transactions")
+}
+
+model QuoteCache {
+  stock         Stock     @relation(fields: [stockSymbol], references: [symbol])
+  stockSymbol   String    @id
+  price         Decimal   @db.Decimal(15,4)
+  previousClose Decimal?  @db.Decimal(15,4) // Fechamento anterior
+  change        Decimal?  @db.Decimal(10,4) // Variação
+  changePercent Decimal?  @db.Decimal(6,4)  // Variação percentual
+  volume        BigInt?   // Volume negociado
+  marketCap     Decimal?  @db.Decimal(20,2) // Valor de mercado
+  fetchedAt     DateTime  @default(now())
+
+  @@index([fetchedAt])
+  @@map("quote_cache")
+}
+
+model Snapshot {
+  id              String        @id @default(uuid())
+  wallet          Wallet        @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  walletId        String
+  createdAt       DateTime      @default(now())
+  investedValue   Decimal       @db.Decimal(15,2) // ∑(quantity * avgCost)
+  marketValue     Decimal       @db.Decimal(15,2) // ∑(quantity * currentPrice)
+  totalDividends  Decimal?      @default(0) @db.Decimal(15,2) // Total de dividendos recebidos
+  items           SnapshotItem[]
+
+  @@index([walletId, createdAt(sort: Desc)])
+  @@map("snapshots")
+}
+
+model SnapshotItem {
+  id             String      @id @default(uuid())
+  snapshot       Snapshot    @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  snapshotId     String
+  stock          Stock       @relation(fields: [stockSymbol], references: [symbol])
+  stockSymbol    String
+  quantity       Decimal     @db.Decimal(15,4)
+  avgCost        Decimal     @db.Decimal(15,4)
+  currentPrice   Decimal     @db.Decimal(15,4)
+  currentValue   Decimal     @db.Decimal(15,2) // quantity * currentPrice
+  totalDividends Decimal?    @default(0) @db.Decimal(10,2) // Dividendos recebidos deste ativo
+
+  @@index([snapshotId])
+  @@index([stockSymbol])
+  @@map("snapshot_items")
+}
+
+// ==========================================
+// 3. ADDITIONAL MODELS
+// ==========================================
+
+model Dividend {
+  id            String   @id @default(uuid())
+  wallet        Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  walletId      String
+  stock         Stock    @relation(fields: [stockSymbol], references: [symbol])
+  stockSymbol   String
+
+  type          String   // "Dividendo", "JCP", "Bonificação", etc.
+  valuePerShare Decimal  @db.Decimal(10,4) // Valor por ação
+  totalValue    Decimal  @db.Decimal(15,2) // Valor total recebido
+  quantity      Decimal  @db.Decimal(15,4) // Quantidade de ações na data
+
+  // Datas importantes
+  exDate        DateTime // Data ex-dividendo
+  paymentDate   DateTime // Data de pagamento
+  recordDate    DateTime? // Data de registro
+
+  notes         String?  // Observações
+  createdAt     DateTime @default(now())
+
+  @@index([walletId, paymentDate(sort: Desc)])
+  @@index([stockSymbol, paymentDate(sort: Desc)])
+  @@index([exDate])
+  @@map("dividends")
+}
+
+model Goal {
+  id          String   @id @default(uuid())
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  walletId    String
+
+  title       String   // "Aposentadoria", "Casa própria", etc.
+  description String?
+  targetValue Decimal  @db.Decimal(15,2) // Valor objetivo
+  currentValue Decimal @default(0) @db.Decimal(15,2) // Valor atual
+  targetDate  DateTime? // Data objetivo
+
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([walletId])
+  @@index([targetDate])
+  @@map("goals")
+}
+
+model Category {
+  id            String   @id @default(uuid())
+  wallet        Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  walletId      String
+
+  name          String   // "Dividendos", "Crescimento", "Especulação", etc.
+  description   String?
+  color         String?  // Cor para UI (hex)
+
+  // Relacionamento many-to-many com stocks
+  stocks        CategoryStock[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([walletId, name])
+  @@index([walletId])
+  @@map("categories")
+}
+
+model CategoryStock {
+  category      Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId    String
+  stock         Stock    @relation(fields: [stockSymbol], references: [symbol])
+  stockSymbol   String
+
+  createdAt     DateTime @default(now())
+
+  @@id([categoryId, stockSymbol])
+  @@map("category_stocks")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  wallet    Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  walletId  String
+
+  action    String   // "CREATE_TRANSACTION", "UPDATE_PORTFOLIO", etc.
+  entityType String  // "Transaction", "PortfolioItem", etc.
+  entityId  String   // ID da entidade alterada
+  oldData   Json?    // Dados antes da alteração
+  newData   Json?    // Dados após a alteração
+
+  createdAt DateTime @default(now())
+  createdBy String   // ID do usuário (para futuras funcionalidades)
+
+  @@index([walletId, createdAt(sort: Desc)])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
