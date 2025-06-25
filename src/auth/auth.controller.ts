@@ -1,4 +1,3 @@
-// src/auth/auth.controller.ts
 import {
   Controller,
   Request,
@@ -9,54 +8,61 @@ import {
   Res,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { AuthService } from './auth.service';
-
-import { Response } from 'express';
+import { Request as ExpressRequest, Response } from 'express';
+import { AuthService, JwtPayload, UserWithoutPassword } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
+
+// 2. (BOA PRÁTICA) Definir interfaces para nossas requisições tipadas
+interface AuthRequest extends ExpressRequest {
+  user: UserWithoutPassword; // Para LocalAuthGuard e JwtAuthGuard
+}
+
+interface GoogleAuthRequest extends ExpressRequest {
+  user: JwtPayload; // Para GoogleAuthGuard
+}
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  // Rota de Registro
   @Post('register')
   async register(@Body() createUserDto: CreateUserDto) {
-    // A validação do DTO acontece automaticamente pelo NestJS
     const user = await this.authService.createUser(createUserDto);
-    // Não retornamos a senha
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...result } = user;
     return result;
   }
 
-  // Rota de Login Local (Email/Senha)
-  @UseGuards(AuthGuard('local')) // Ativa a LocalStrategy
+  // 3. (CORREÇÃO) Tipar 'req' e remover 'async'
+  @UseGuards(AuthGuard('local'))
   @Post('login')
-  async login(@Request() req) {
+  login(@Request() req: AuthRequest) {
+    // req.user agora é 'UserWithoutPassword', que é o tipo que this.authService.login espera.
+    // O método login do serviço é síncrono, então removemos 'async' daqui.
     return this.authService.login(req.user);
   }
 
-  // Rota para iniciar o fluxo Google OAuth
+  // 4. (CORREÇÃO) Remover 'req' não utilizado
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  async googleAuth(@Request() req) {
-    // O Guard redireciona para a página de login do Google
+  googleAuth() {
+    // O Guard faz todo o trabalho de redirecionamento. O corpo pode ser vazio.
   }
 
-  // Rota de callback do Google
+  // 5. (CORREÇÃO) Tipar 'req' e usar desestruturação
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  googleAuthRedirect(@Request() req, @Res() res: Response) {
-    // A GoogleStrategy já fez a validação e o `req.user` agora contém o JWT.
-    // Você pode redirecionar o usuário para o frontend com o token.
-    const jwt = req.user.access_token;
-    res.redirect(`http://localhost:4200/login-success?token=${jwt}`); // Exemplo para Angular/React
+  googleAuthRedirect(@Request() req: GoogleAuthRequest, @Res() res: Response) {
+    // req.user agora é 'JwtPayload' { access_token: string }
+    const { access_token } = req.user;
+    res.redirect(`http://localhost:4200/login-success?token=${access_token}`);
   }
 
-  // Rota de exemplo para testar o JWT
-  @UseGuards(AuthGuard('jwt')) // Ativa a JwtStrategy, protegendo a rota
+  // 6. (CORREÇÃO) Tipar 'req' para obter o perfil do usuário
+  @UseGuards(AuthGuard('jwt'))
   @Get('profile')
-  getProfile(@Request() req) {
-    // Graças ao JwtStrategy, req.user contém os dados do usuário logado
+  getProfile(@Request() req: AuthRequest): UserWithoutPassword {
+    // req.user agora é 'UserWithoutPassword', que foi retornado pela JwtStrategy
     return req.user;
   }
 }

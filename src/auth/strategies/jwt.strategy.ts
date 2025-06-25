@@ -56,6 +56,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     // 5. (CRUCIAL PARA SEGURANÇA) Removemos o campo da senha antes de retornar o objeto
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...result } = user;
 
     return result;
