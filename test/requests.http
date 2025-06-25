@@ -6,15 +6,10 @@
 @email_valido = usuario.teste.2506@exemplo.com
 @senha_valida = SenhaForte123!
 
-
 ###
 # =======================================================
 # 1. Criar uma nova conta com sucesso
 # =======================================================
-#
-# OBJETIVO: Testar o "caminho feliz".
-# ESPERADO: Retornar status 201 Created com os dados do usuário (sem a senha) e da carteira criada.
-#
 POST {{host}}/auth/register
 Content-Type: application/json
 
@@ -24,15 +19,10 @@ Content-Type: application/json
   "name": "Usuário de Teste"
 }
 
-
 ###
 # =======================================================
 # 2. Tentar criar a mesma conta novamente
 # =======================================================
-#
-# OBJETIVO: Garantir que o e-mail é único.
-# ESPERADO: Retornar status 409 Conflict com a mensagem "O e-mail já está em uso."
-#
 POST {{host}}/auth/register
 Content-Type: application/json
 
@@ -42,15 +32,10 @@ Content-Type: application/json
   "name": "Usuário Duplicado"
 }
 
-
 ###
 # =======================================================
 # 3. Tentar criar uma conta com e-mail inválido
 # =======================================================
-#
-# OBJETIVO: Testar a validação do DTO (class-validator).
-# ESPERADO: Retornar status 400 Bad Request com os detalhes do erro de validação.
-#
 POST {{host}}/auth/register
 Content-Type: application/json
 
@@ -60,15 +45,10 @@ Content-Type: application/json
   "name": "Usuário Inválido"
 }
 
-
 ###
 # =======================================================
 # 4. Tentar criar uma conta com senha muito curta
 # =======================================================
-#
-# OBJETIVO: Testar a validação de tamanho mínimo da senha no DTO.
-# ESPERADO: Retornar status 400 Bad Request com a mensagem "A senha deve ter no mínimo 8 caracteres."
-#
 POST {{host}}/auth/register
 Content-Type: application/json
 
@@ -80,17 +60,38 @@ Content-Type: application/json
 
 ###
 # =======================================================
-# 5. Login com conta criada com sucesso
+# 5. Fazer login com sucesso
 # =======================================================
-#
-# OBJETIVO: Testar o login com credenciais válidas.
-# ESPERADO: Retornar status 200 OK com o token JWT e os dados do usuário (sem a senha).
-#
-
 POST {{host}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "usuario.teste.2506@exemplo.com",
-  "password": "SenhaForte123!",
+  "email": "{{email_valido}}",
+  "password": "{{senha_valida}}"
+}
+
+
+###
+# =======================================================
+# 6. Tentar fazer login com senha incorreta
+# =======================================================
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email_valido}}",
+  "password": "senha-incorreta-123"
+}
+
+
+###
+# =======================================================
+# 7. Tentar fazer login com um usuário que não existe
+# =======================================================
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "ninguem@exemplo.com",
+  "password": "qualquercoisa"
 }
