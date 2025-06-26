@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { PrismaService } from 'src/prisma.service';
-import { TxType } from '@prisma/client';
+import { Transaction, TxType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
@@ -107,6 +107,24 @@ export class TransactionService {
       }
 
       return transaction;
+    });
+  }
+  async findAllByUserId(userId: string): Promise<Transaction[]> {
+    const wallet = await this.prisma.wallet.findUnique({
+      where: { userId },
+    });
+
+    if (!wallet) {
+      return [];
+    }
+
+    return this.prisma.transaction.findMany({
+      where: {
+        walletId: wallet.id,
+      },
+      orderBy: {
+        executedAt: 'desc',
+      },
     });
   }
 }

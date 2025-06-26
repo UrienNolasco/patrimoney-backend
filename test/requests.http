@@ -8,7 +8,7 @@
 
 # Variáveis que serão preenchidas pelos testes
 
-@jwt_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YjEzZDljOS1iMjY4LTRkYjctOGQ0MC02Y2ZmNWY4YmI4MGMiLCJlbWFpbCI6InVzdWFyaW8udGVzdGUuMjUwNkBleGVtcGxvLmNvbSIsImlhdCI6MTc1MDkxMTg4MCwiZXhwIjoxNzUwOTE1NDgwfQ.gkQt8CcDYvC9Nyi7W4cFSMSpyw7xT_HdCI8eazUcvXg
+@jwt_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YjEzZDljOS1iMjY4LTRkYjctOGQ0MC02Y2ZmNWY4YmI4MGMiLCJlbWFpbCI6InVzdWFyaW8udGVzdGUuMjUwNkBleGVtcGxvLmNvbSIsImlhdCI6MTc1MDk0NTAxNSwiZXhwIjoxNzUwOTQ4NjE1fQ.R71jdELs84mhzCOoXOMRnqlFP6eT0818YCcBwFbidrU
 @wallet_id = a2ecca97-9620-4bd4-9567-c3399f3331a6
 
 ###
@@ -152,7 +152,7 @@ Authorization: Bearer {{jwt_token}}
   "stockSymbol": "PETR4",
   "type": "BUY",
   "quantity": 10,
-  "price": 35.50,
+  "price": 27,
   "executedAt": "2025-06-25T10:00:00Z"
 }
 
@@ -195,3 +195,13 @@ Authorization: Bearer {{jwt_token}}
   "price": 38.00,
   "executedAt": "2025-06-26T12:00:00Z"
 }
+
+###
+# =======================================================
+# 14. (NOVO) Listar todas as transações do usuário
+# =======================================================
+# PRÉ-REQUISITOS: Execute os testes #5 e #8 (login e get wallet)
+# e pelo menos uma transação de compra (#11).
+# ESPERADO: Status 200 OK e uma lista (array) com os objetos das transações.
+GET {{host}}/transactions
+Authorization: Bearer {{jwt_token}}

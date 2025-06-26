@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import * as bcrypt from 'bcrypt';
-import { User, Wallet } from '@prisma/client';
+import { Transaction, User, Wallet } from '@prisma/client';
 import { createTestApp } from './setup';
 import { PrismaService } from 'src/prisma.service';
 import { JwtPayload } from 'src/auth/auth.service';
@@ -176,6 +176,25 @@ describe('TransactionController (e2e)', () => {
       });
 
       expect(portfolioItem).toBeNull();
+    });
+  });
+  describe('/transactions (GET)', () => {
+    it('should return a list of transactions for the authenticated user', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/transactions')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      const transactions = response.body as Transaction[];
+      expect(Array.isArray(transactions)).toBe(true);
+      // A quantidade exata pode variar dependendo da ordem,
+      // então é melhor verificar se há pelo menos uma.
+      expect(transactions.length).toBeGreaterThan(0);
+      expect(transactions[0].stockSymbol).toBeDefined();
+    });
+
+    it('should return 401 Unauthorized if no token is provided', () => {
+      return request(app.getHttpServer()).get('/transactions').expect(401);
     });
   });
 });
