@@ -8,7 +8,7 @@
 
 # Variáveis que serão preenchidas pelos testes
 
-@jwt_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YjEzZDljOS1iMjY4LTRkYjctOGQ0MC02Y2ZmNWY4YmI4MGMiLCJlbWFpbCI6InVzdWFyaW8udGVzdGUuMjUwNkBleGVtcGxvLmNvbSIsImlhdCI6MTc1MDk2ODA0MSwiZXhwIjoxNzUwOTcxNjQxfQ.wVXpvv2Yb-SSFc9nYiSW_9q4wsMLJMEOQgjK2OV9AHY
+@jwt_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YjEzZDljOS1iMjY4LTRkYjctOGQ0MC02Y2ZmNWY4YmI4MGMiLCJlbWFpbCI6InVzdWFyaW8udGVzdGUuMjUwNkBleGVtcGxvLmNvbSIsImlhdCI6MTc1MDk3NDIzMCwiZXhwIjoxNzUwOTc3ODMwfQ.675aAxq8hGGGtljek58_eM-b3LJOz4AgOv4QpIYA4-I
 @wallet_id = a2ecca97-9620-4bd4-9567-c3399f3331a6
 
 ###
@@ -229,5 +229,23 @@ Authorization: Bearer {{jwt_token}}
 # 1. Execute o teste #1 (Criar Conta) e #5 (Login) para obter o token.
 # 2. Execute alguns testes de transação (ex: #11) para popular o portfólio.
 # ESPERADO: Status 200 OK e uma lista com os itens do portfólio (ativo, quantidade, preço médio).
+GET {{host}}/portfolio
+Authorization: Bearer {{jwt_token}}
+
+###
+# ==========================================================
+# 16. Disparar a atualização manual do portfólio
+# ==========================================================
+# ESPERADO: Status 202 Accepted e uma mensagem de sucesso.
+# OBSERVE o console da sua aplicação NestJS para ver os logs da sincronização.
+POST {{host}}/portfolio/refresh
+Authorization: Bearer {{jwt_token}}
+
+
+###
+# ==========================================================
+# 17. Visualizar o portfólio (para ver os resultados)
+# ==========================================================
+# Execute este teste alguns segundos após o TESTE 1.
 GET {{host}}/portfolio
 Authorization: Bearer {{jwt_token}}

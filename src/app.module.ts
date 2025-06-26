@@ -8,7 +8,8 @@ import { PortfolioModule } from './portfolio/portfolio.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { HttpModule } from '@nestjs/axios';
 import { MarketDataModule } from './market-data/market-data.module';
-import { AppLoggerService } from './common/logger/logger.service';
+import { ConfigModule } from '@nestjs/config';
+import { LoggerModule } from './common/logger/logger.module';
 
 @Module({
   imports: [
@@ -19,9 +20,11 @@ import { AppLoggerService } from './common/logger/logger.service';
     ScheduleModule.forRoot(),
     HttpModule,
     MarketDataModule,
+    ConfigModule.forRoot({ isGlobal: true }),
+    LoggerModule,
   ],
   controllers: [AppController],
-  providers: [AppService, AppLoggerService],
-  exports: [AppLoggerService],
+  providers: [AppService],
+  exports: [],
 })
 export class AppModule {}
