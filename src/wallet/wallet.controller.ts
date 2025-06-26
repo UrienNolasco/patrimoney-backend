@@ -14,7 +14,7 @@ import { AuthGuard } from '@nestjs/passport';
 // (Você pode mover isso para um arquivo de tipos compartilhado no futuro)
 import { Request as ExpressRequest } from 'express';
 import { UserWithoutPassword } from 'src/auth/auth.service';
-interface AuthRequest extends ExpressRequest {
+export interface AuthRequest extends ExpressRequest {
   user: UserWithoutPassword;
 }
 
