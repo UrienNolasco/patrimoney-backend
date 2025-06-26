@@ -6,6 +6,8 @@
 @email_valido = usuario.teste.2506@exemplo.com
 @senha_valida = SenhaForte123!
 
+@jwt_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YjEzZDljOS1iMjY4LTRkYjctOGQ0MC02Y2ZmNWY4YmI4MGMiLCJlbWFpbCI6InVzdWFyaW8udGVzdGUuMjUwNkBleGVtcGxvLmNvbSIsImlhdCI6MTc1MDkwNTQ3OCwiZXhwIjoxNzUwOTA5MDc4fQ.HdAYVd-ItooLZ8aiHRGYI4ee32KHy73kEkfHSAqwBB4
+
 ###
 # =======================================================
 # 1. Criar uma nova conta com sucesso
@@ -95,3 +97,37 @@ Content-Type: application/json
   "email": "ninguem@exemplo.com",
   "password": "qualquercoisa"
 }
+
+###
+# =======================================================
+# 8. (NOVO) Buscar a carteira do usuário logado
+# =======================================================
+# PRÉ-REQUISITO: Execute o teste #5 (Login) primeiro para obter o token.
+# ESPERADO: Status 200 OK e os dados da carteira do usuário.
+GET {{host}}/wallet
+Authorization: Bearer {{jwt_token}}
+
+
+###
+# =======================================================
+# 9. (NOVO) Atualizar a carteira do usuário logado
+# =======================================================
+# PRÉ-REQUISITO: Execute o teste #5 (Login) primeiro para obter o token.
+# ESPERADO: Status 200 OK e os dados da carteira com o nome atualizado.
+PATCH {{host}}/wallet
+Content-Type: application/json
+Authorization: Bearer {{jwt_token}}
+
+{
+  "name": "Minha Carteira Principal (Editada)",
+  "description": "Esta é a minha carteira principal, agora com uma descrição atualizada."
+}
+
+
+###
+# =======================================================
+# 10. (NOVO) Tentar buscar a carteira sem autenticação
+# =======================================================
+# OBJETIVO: Testar se a rota está devidamente protegida.
+# ESPERADO: Status 401 Unauthorized.
+GET {{host}}/wallet
