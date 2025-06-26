@@ -61,7 +61,7 @@ describe('TransactionController (e2e)', () => {
         stockSymbol,
         type: 'BUY',
         quantity: 10,
-        price: 35.0,
+        price: 35.5,
         executedAt: new Date().toISOString(),
       };
 
@@ -80,7 +80,7 @@ describe('TransactionController (e2e)', () => {
 
       expect(portfolioItem).toBeDefined();
       expect(portfolioItem!.quantity.toNumber()).toBe(10);
-      expect(portfolioItem!.avgCost.toNumber()).toBe(35.0);
+      expect(portfolioItem!.avgCost.toNumber()).toBe(35.5);
     });
 
     it('should register a second BUY and correctly update the avgCost', async () => {
