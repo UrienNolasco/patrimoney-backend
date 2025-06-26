@@ -6,7 +6,10 @@
 @email_valido = usuario.teste.2506@exemplo.com
 @senha_valida = SenhaForte123!
 
-@jwt_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YjEzZDljOS1iMjY4LTRkYjctOGQ0MC02Y2ZmNWY4YmI4MGMiLCJlbWFpbCI6InVzdWFyaW8udGVzdGUuMjUwNkBleGVtcGxvLmNvbSIsImlhdCI6MTc1MDkwNTQ3OCwiZXhwIjoxNzUwOTA5MDc4fQ.HdAYVd-ItooLZ8aiHRGYI4ee32KHy73kEkfHSAqwBB4
+# Variáveis que serão preenchidas pelos testes
+
+@jwt_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YjEzZDljOS1iMjY4LTRkYjctOGQ0MC02Y2ZmNWY4YmI4MGMiLCJlbWFpbCI6InVzdWFyaW8udGVzdGUuMjUwNkBleGVtcGxvLmNvbSIsImlhdCI6MTc1MDkxMTg4MCwiZXhwIjoxNzUwOTE1NDgwfQ.gkQt8CcDYvC9Nyi7W4cFSMSpyw7xT_HdCI8eazUcvXg
+@wallet_id = a2ecca97-9620-4bd4-9567-c3399f3331a6
 
 ###
 # =======================================================
@@ -131,3 +134,64 @@ Authorization: Bearer {{jwt_token}}
 # OBJETIVO: Testar se a rota está devidamente protegida.
 # ESPERADO: Status 401 Unauthorized.
 GET {{host}}/wallet
+
+###
+# =======================================================
+# 11. (NOVO) Registrar a primeira compra de um ativo (PETR4)
+# =======================================================
+# PRÉ-REQUISITOS: 
+# 1. Execute os testes #5 e #8 para obter o token e o ID da carteira.
+# 2. Garanta que o ativo 'PETR4' existe na sua tabela "stocks".
+# ESPERADO: Status 201 Created.
+POST {{host}}/transactions
+Content-Type: application/json
+Authorization: Bearer {{jwt_token}}
+
+{
+  "walletId": "{{wallet_id}}",
+  "stockSymbol": "PETR4",
+  "type": "BUY",
+  "quantity": 10,
+  "price": 35.50,
+  "executedAt": "2025-06-25T10:00:00Z"
+}
+
+
+###
+# =======================================================
+# 12. (NOVO) Registrar a segunda compra do mesmo ativo (PETR4)
+# =======================================================
+# PRÉ-REQUISITOS: Execute os testes #5, #8 e #11.
+# ESPERADO: Status 201 Created. O preço médio do item no portfólio será recalculado.
+POST {{host}}/transactions
+Content-Type: application/json
+Authorization: Bearer {{jwt_token}}
+
+{
+  "walletId": "{{wallet_id}}",
+  "stockSymbol": "PETR4",
+  "type": "BUY",
+  "quantity": 5,
+  "price": 37.00,
+  "executedAt": "2025-06-26T11:00:00Z"
+}
+
+
+###
+# =======================================================
+# 13. (NOVO) Registrar uma venda parcial (PETR4)
+# =======================================================
+# PRÉ-REQUISITOS: Execute os testes anteriores de compra.
+# ESPERADO: Status 201 Created. A quantidade do item no portfólio será reduzida.
+POST {{host}}/transactions
+Content-Type: application/json
+Authorization: Bearer {{jwt_token}}
+
+{
+  "walletId": "{{wallet_id}}",
+  "stockSymbol": "PETR4",
+  "type": "SELL",
+  "quantity": 6,
+  "price": 38.00,
+  "executedAt": "2025-06-26T12:00:00Z"
+}
