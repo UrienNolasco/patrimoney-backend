@@ -8,7 +8,7 @@
 
 # Variáveis que serão preenchidas pelos testes
 
-@jwt_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YjEzZDljOS1iMjY4LTRkYjctOGQ0MC02Y2ZmNWY4YmI4MGMiLCJlbWFpbCI6InVzdWFyaW8udGVzdGUuMjUwNkBleGVtcGxvLmNvbSIsImlhdCI6MTc1MDk0NTAxNSwiZXhwIjoxNzUwOTQ4NjE1fQ.R71jdELs84mhzCOoXOMRnqlFP6eT0818YCcBwFbidrU
+@jwt_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YjEzZDljOS1iMjY4LTRkYjctOGQ0MC02Y2ZmNWY4YmI4MGMiLCJlbWFpbCI6InVzdWFyaW8udGVzdGUuMjUwNkBleGVtcGxvLmNvbSIsImlhdCI6MTc1MDk2ODA0MSwiZXhwIjoxNzUwOTcxNjQxfQ.wVXpvv2Yb-SSFc9nYiSW_9q4wsMLJMEOQgjK2OV9AHY
 @wallet_id = a2ecca97-9620-4bd4-9567-c3399f3331a6
 
 ###
@@ -176,6 +176,21 @@ Authorization: Bearer {{jwt_token}}
   "executedAt": "2025-06-26T11:00:00Z"
 }
 
+###
+
+POST {{host}}/transactions
+Content-Type: application/json
+Authorization: Bearer {{jwt_token}}
+
+{
+  "walletId": "{{wallet_id}}",
+  "stockSymbol": "VALE3",
+  "type": "BUY",
+  "quantity": 5,
+  "price": 35.00,
+  "executedAt": "2025-06-26T11:00:00Z"
+}
+
 
 ###
 # =======================================================
@@ -204,4 +219,15 @@ Authorization: Bearer {{jwt_token}}
 # e pelo menos uma transação de compra (#11).
 # ESPERADO: Status 200 OK e uma lista (array) com os objetos das transações.
 GET {{host}}/transactions
+Authorization: Bearer {{jwt_token}}
+
+###
+# =======================================================
+# 15. (NOVO) Visualizar o portfólio consolidado
+# =======================================================
+# PRÉ-REQUISITOS: 
+# 1. Execute o teste #1 (Criar Conta) e #5 (Login) para obter o token.
+# 2. Execute alguns testes de transação (ex: #11) para popular o portfólio.
+# ESPERADO: Status 200 OK e uma lista com os itens do portfólio (ativo, quantidade, preço médio).
+GET {{host}}/portfolio
 Authorization: Bearer {{jwt_token}}
