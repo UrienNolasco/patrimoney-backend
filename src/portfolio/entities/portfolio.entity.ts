@@ -10,6 +10,12 @@ export class PortfolioItemEntity {
   assetClass: AssetClass;
   logoUrl: string | null;
 
+  currentPrice?: string;
+  marketValue?: string;
+  totalCost?: string;
+  gainLoss?: string; // Lucro/Prejuízo em valor
+  gainLossPercent?: string; // Lucro/Prejuízo em percentual
+
   constructor(partial: Partial<PortfolioItemEntity>) {
     Object.assign(this, partial);
   }

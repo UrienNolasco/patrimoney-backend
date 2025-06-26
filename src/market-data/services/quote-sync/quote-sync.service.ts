@@ -37,27 +37,33 @@ export class QuoteSyncService {
     });
 
     for (const stock of stocks) {
-      try {
-        const quote = await this.brapiService.getQuote(stock.symbol);
-        if (quote) {
-          await this.prisma.quoteCache.upsert({
+      const quote = await this.brapiService.getQuote(stock.symbol);
+      if (quote) {
+        // Envolver as duas atualizações em uma transação para garantir consistência
+        await this.prisma.$transaction([
+          // Ação 1: Atualizar o cache de cotações (como antes)
+          this.prisma.quoteCache.upsert({
             where: { stockSymbol: stock.symbol },
-            update: {
-              price: quote.regularMarketPrice,
-              fetchedAt: new Date(),
-            },
+            update: { price: quote.regularMarketPrice },
             create: {
               stockSymbol: stock.symbol,
               price: quote.regularMarketPrice,
             },
-          });
-          this.logger.log(`Synced quote for ${stock.symbol}`);
-        }
-      } catch (error) {
-        this.logger.error(`Error syncing ${stock.symbol}`, error);
+          }),
+
+          // 2. (NOVO) Ação 2: Atualizar a tabela Stock com metadados
+          this.prisma.stock.update({
+            where: { symbol: stock.symbol },
+            data: {
+              // Apenas atualiza se a Brapi fornecer um novo valor
+              name: quote.longName ?? undefined,
+              logoUrl: quote.logourl ?? undefined,
+            },
+          }),
+        ]);
+        this.logger.log(`Synced data for ${stock.symbol}`);
       }
     }
-
     this.logger.log('Sync process finished.');
   }
 }

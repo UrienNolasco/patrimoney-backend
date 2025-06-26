@@ -8,7 +8,7 @@
 
 # Variáveis que serão preenchidas pelos testes
 
-@jwt_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YjEzZDljOS1iMjY4LTRkYjctOGQ0MC02Y2ZmNWY4YmI4MGMiLCJlbWFpbCI6InVzdWFyaW8udGVzdGUuMjUwNkBleGVtcGxvLmNvbSIsImlhdCI6MTc1MDk3NDIzMCwiZXhwIjoxNzUwOTc3ODMwfQ.675aAxq8hGGGtljek58_eM-b3LJOz4AgOv4QpIYA4-I
+@jwt_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YjEzZDljOS1iMjY4LTRkYjctOGQ0MC02Y2ZmNWY4YmI4MGMiLCJlbWFpbCI6InVzdWFyaW8udGVzdGUuMjUwNkBleGVtcGxvLmNvbSIsImlhdCI6MTc1MDk4MDU0MiwiZXhwIjoxNzUwOTg0MTQyfQ.T3KftR9Z78-h9bUUZbZXFVqssK49g4hgnssV_CfRytM
 @wallet_id = a2ecca97-9620-4bd4-9567-c3399f3331a6
 
 ###
@@ -207,7 +207,7 @@ Authorization: Bearer {{jwt_token}}
   "stockSymbol": "PETR4",
   "type": "SELL",
   "quantity": 6,
-  "price": 38.00,
+  "price": 40.00,
   "executedAt": "2025-06-26T12:00:00Z"
 }
 
