@@ -90,7 +90,9 @@ describe('PortfolioController (e2e)', () => {
 
       // --- Verificações para PETR4 (Lucro) ---
       expect(petr4Item).toBeDefined();
-      expect(petr4Item?.stockName).toEqual('Petrobras PN');
+      expect(petr4Item?.stockName).toEqual(
+        'Petróleo Brasileiro S.A. - Petrobras',
+      );
       expect(petr4Item?.quantity).toEqual('50.0000');
       expect(petr4Item?.avgCost).toEqual('30.00');
       // Verificações dos novos campos calculados

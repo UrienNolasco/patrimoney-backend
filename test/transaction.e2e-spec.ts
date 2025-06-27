@@ -5,11 +5,14 @@ import { Transaction, User, Wallet } from '@prisma/client';
 import { createTestApp } from './setup';
 import { PrismaService } from 'src/prisma.service';
 import { JwtPayload } from 'src/auth/auth.service';
+import { BrapiService } from 'src/market-data/services/brapi/brapi.service';
+import { BrapiResult } from 'src/market-data/dto/brapi-quote.response.dto';
 
 describe('TransactionController (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let authToken: string;
+  let brapiService: BrapiService;
   let testUser: User & { wallet: Wallet };
   let testWallet: Wallet;
 
@@ -22,6 +25,7 @@ describe('TransactionController (e2e)', () => {
     const testApp = await createTestApp();
     app = testApp.app;
     prisma = testApp.prisma;
+    brapiService = app.get<BrapiService>(BrapiService);
 
     const hashedPassword = await bcrypt.hash(txUserDto.password, 10);
     testUser = (await prisma.user.create({
@@ -81,6 +85,68 @@ describe('TransactionController (e2e)', () => {
       expect(portfolioItem).toBeDefined();
       expect(portfolioItem!.quantity.toNumber()).toBe(10);
       expect(portfolioItem!.avgCost.toNumber()).toBe(35.5);
+    });
+
+    it('should automatically create a new stock if the symbol does not exist', async () => {
+      const newStockSymbol = 'WEGE3'; // Um ativo que ainda não existe no DB
+
+      // 1. Setup do Mock: Simular a resposta da Brapi para 'WEGE3'
+      const mockBrapiResponse: BrapiResult = {
+        symbol: 'WEGE3',
+        longName: 'WEG S.A.',
+        shortName: 'WEG SA',
+        logourl: 'https://s3-symbol-logo.tradingview.com/weg.svg',
+        regularMarketPrice: 35.0,
+        currency: 'BRL',
+        marketCap: 147000000000,
+      };
+
+      // Usamos jest.spyOn para interceptar a chamada ao método real
+      const brapiSpy = jest
+        .spyOn(brapiService, 'getQuote')
+        .mockResolvedValue(mockBrapiResponse);
+
+      const createTxDto = {
+        walletId: testWallet.id,
+        stockSymbol: newStockSymbol,
+        type: 'BUY',
+        quantity: 10,
+        price: 35.0,
+        executedAt: new Date().toISOString(),
+      };
+
+      // 2. Ação: Fazer a requisição que irá disparar a lógica
+      await request(app.getHttpServer())
+        .post('/transactions')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(createTxDto)
+        .expect(201);
+
+      // 3. Verificações
+      // a) Verificar se o nosso serviço da Brapi foi chamado com o ticker correto
+      expect(brapiSpy).toHaveBeenCalledWith(newStockSymbol);
+
+      // b) Verificar se o ativo foi realmente criado no nosso banco de dados
+      const createdStock = await prisma.stock.findUnique({
+        where: { symbol: newStockSymbol },
+      });
+      expect(createdStock).toBeDefined();
+      expect(createdStock?.name).toEqual(mockBrapiResponse.longName);
+
+      // c) Verificar se o item de portfólio também foi criado
+      const portfolioItem = await prisma.portfolioItem.findUnique({
+        where: {
+          walletId_stockSymbol: {
+            walletId: testWallet.id,
+            stockSymbol: newStockSymbol,
+          },
+        },
+      });
+      expect(portfolioItem).toBeDefined();
+      expect(portfolioItem?.quantity.toNumber()).toBe(10);
+
+      // Limpar o mock para não afetar outros testes
+      brapiSpy.mockRestore();
     });
 
     it('should register a second BUY and correctly update the avgCost', async () => {

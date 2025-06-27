@@ -6,12 +6,16 @@ import {
 } from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { PrismaService } from 'src/prisma.service';
-import { Transaction, TxType } from '@prisma/client';
+import { AssetClass, Transaction, TxType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { BrapiService } from 'src/market-data/services/brapi/brapi.service';
 
 @Injectable()
 export class TransactionService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private brapiService: BrapiService,
+  ) {}
 
   async create(createTransactionDto: CreateTransactionDto, userId: string) {
     const { walletId, stockSymbol, quantity, price, type } =
@@ -24,23 +28,37 @@ export class TransactionService {
       throw new UnauthorizedException('Acesso negado a esta carteira.');
     }
 
-    const stock = await this.prisma.stock.findUnique({
-      where: { symbol: stockSymbol },
-    });
-    if (!stock) {
-      throw new NotFoundException(
-        `Ativo com o símbolo ${stockSymbol} não encontrado.`,
-      );
-    }
-
     return this.prisma.$transaction(async (tx) => {
-      // 2. (CORREÇÃO) Calcular o campo 'total' antes de criar a transação
+      let stock = await tx.stock.findUnique({
+        where: { symbol: stockSymbol },
+      });
+
+      if (!stock) {
+        const quote = await this.brapiService.getQuote(stockSymbol);
+
+        if (!quote) {
+          throw new NotFoundException(
+            `Ativo com o símbolo ${stockSymbol} não é válido ou não foi encontrado.`,
+          );
+        }
+
+        stock = await tx.stock.create({
+          data: {
+            symbol: quote.symbol,
+            name: quote.longName,
+            logoUrl: quote.logourl,
+            // Por enquanto, vamos assumir que é uma ACAO.
+            // No futuro, a Brapi pode fornecer essa informação.
+            assetClass: AssetClass.ACAO,
+          },
+        });
+      }
       const total = new Decimal(quantity).times(price);
 
       const transaction = await tx.transaction.create({
         data: {
           ...createTransactionDto,
-          total: total, // Adicionar o total calculado
+          total: total,
         },
       });
 
