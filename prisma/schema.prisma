@@ -149,7 +149,7 @@ model Transaction {
 }
 
 model QuoteCache {
-  stock         Stock     @relation(fields: [stockSymbol], references: [symbol])
+  stock         Stock     @relation(fields: [stockSymbol], references: [symbol], onDelete: Cascade)
   stockSymbol   String    @id
   price         Decimal   @db.Decimal(15,4)
   previousClose Decimal?  @db.Decimal(15,4) // Fechamento anterior

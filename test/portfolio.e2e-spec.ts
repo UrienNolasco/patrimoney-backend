@@ -104,7 +104,7 @@ describe('PortfolioController (e2e)', () => {
 
       // --- Verificações para VALE3 (Prejuízo) ---
       expect(vale3Item).toBeDefined();
-      expect(vale3Item?.stockName).toEqual('Vale ON');
+      expect(vale3Item?.stockName).toEqual('Vale S.A.');
       expect(vale3Item?.quantity).toEqual('25.0000');
       expect(vale3Item?.avgCost).toEqual('65.00');
       // Verificações dos novos campos calculados

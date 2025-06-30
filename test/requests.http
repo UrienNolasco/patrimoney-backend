@@ -2,13 +2,13 @@
 ### Coleção de testes para o módulo de autenticação
 
 # Variáveis - Altere a porta se a sua aplicação rodar em uma diferente
-@host = http://localhost:3000
+@host = http://192.168.0.218:3000
 @email_valido = usuario.teste.2506@exemplo.com
 @senha_valida = SenhaForte123!
 
 # Variáveis que serão preenchidas pelos testes
 
-@jwt_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YjEzZDljOS1iMjY4LTRkYjctOGQ0MC02Y2ZmNWY4YmI4MGMiLCJlbWFpbCI6InVzdWFyaW8udGVzdGUuMjUwNkBleGVtcGxvLmNvbSIsImlhdCI6MTc1MDk4MDU0MiwiZXhwIjoxNzUwOTg0MTQyfQ.T3KftR9Z78-h9bUUZbZXFVqssK49g4hgnssV_CfRytM
+@jwt_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YjEzZDljOS1iMjY4LTRkYjctOGQ0MC02Y2ZmNWY4YmI4MGMiLCJlbWFpbCI6InVzdWFyaW8udGVzdGUuMjUwNkBleGVtcGxvLmNvbSIsImlhdCI6MTc1MTI0NTMzMiwiZXhwIjoxNzUxMjUyNTMyfQ.afi5wI__Tn2_lKW-Y2hpevy1MTY9vnPKSVEdk6ksLB0
 @wallet_id = a2ecca97-9620-4bd4-9567-c3399f3331a6
 
 ###
@@ -19,9 +19,9 @@ POST {{host}}/auth/register
 Content-Type: application/json
 
 {
-  "email": "{{email_valido}}",
-  "password": "{{senha_valida}}",
-  "name": "Usuário de Teste"
+  "email": "urien.dragon@gmail.com",
+  "password": "uriendrag0n",
+  "name": "Urien Nolasco"
 }
 
 ###
@@ -249,3 +249,4 @@ Authorization: Bearer {{jwt_token}}
 # Execute este teste alguns segundos após o TESTE 1.
 GET {{host}}/portfolio
 Authorization: Bearer {{jwt_token}}
+
