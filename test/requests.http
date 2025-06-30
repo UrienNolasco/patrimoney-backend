@@ -250,3 +250,14 @@ Authorization: Bearer {{jwt_token}}
 GET {{host}}/portfolio
 Authorization: Bearer {{jwt_token}}
 
+###
+# =======================================================
+# 18. (NOVO) Visualizar APENAS O SUMÁRIO do portfólio
+# =======================================================
+# OBJETIVO: Testar a resposta com o parâmetro de consulta ?summary=true.
+# PRÉ-REQUISITO: Execute o teste #5 (Login) para obter o token.
+# ESPERADO: Status 200 OK e um objeto JSON contendo APENAS os totais, sem o array 'items'.
+GET {{host}}/portfolio?summary=true
+Authorization: Bearer {{jwt_token}}
+
+

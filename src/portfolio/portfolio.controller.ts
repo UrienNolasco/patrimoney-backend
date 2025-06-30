@@ -5,11 +5,11 @@ import {
   Request,
   Post,
   HttpCode,
+  Query,
 } from '@nestjs/common';
 import { PortfolioService } from './portfolio.service';
 
 import { AuthGuard } from '@nestjs/passport';
-import { PortfolioItemEntity } from './entities/portfolio.entity';
 import { AuthRequest } from 'src/wallet/wallet.controller';
 import { QuoteSyncService } from 'src/market-data/services/quote-sync/quote-sync.service';
 
@@ -22,8 +22,13 @@ export class PortfolioController {
   ) {}
 
   @Get()
-  getPortfolio(@Request() req: AuthRequest): Promise<PortfolioItemEntity[]> {
-    return this.portfolioService.getPortfolio(req.user.id);
+  getPortfolio(
+    @Request() req: AuthRequest,
+    @Query('summary') summary?: string,
+  ) {
+    // Convertemos a string 'true' para um booleano
+    const apenassumo = summary === 'true';
+    return this.portfolioService.getPortfolio(req.user.id, apenassumo);
   }
 
   @Post('refresh')
